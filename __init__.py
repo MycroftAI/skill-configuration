@@ -31,6 +31,7 @@ class ConfigurationSkill(ScheduledSkill):
         super(ConfigurationSkill, self).__init__("ConfigurationSkill")
         self.max_delay = self.config.get('max_delay')
         self.api = DeviceApi()
+        self.config_hash = ''
 
     def initialize(self):
         intent = IntentBuilder("UpdateConfigurationIntent") \
@@ -42,8 +43,10 @@ class ConfigurationSkill(ScheduledSkill):
 
     def handle_update_intent(self, message):
         try:
-            self.update()
-            self.speak_dialog("config.updated")
+            if self.update():
+                self.speak_dialog("config.updated")
+            else:
+                self.speak_dialog("config.no_change")
         except HTTPError as e:
             self.__api_error(e)
 
@@ -61,7 +64,13 @@ class ConfigurationSkill(ScheduledSkill):
         location = self.api.find_location()
         if location:
             config["location"] = location
-        self.emitter.emit(Message("configuration.updated", config))
+
+        if self.config_hash != hash(str(config)):
+            self.emitter.emit(Message("configuration.updated", config))
+            self.config_hash = hash(str(config))
+            return True
+        else:
+            return False
 
     def __api_error(self, e):
         if e.response.status_code == 401:
