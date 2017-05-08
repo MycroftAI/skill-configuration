@@ -26,6 +26,32 @@ from mycroft.skills.scheduled_skills import ScheduledSkill
 __author__ = 'augustnmonteiro'
 
 
+def parse_tts(tts_settings):
+    """ Create tts entry from TtsSettings
+        Args:
+            tts_systems list of tts systems from Tartarus
+
+        Returns: tts entry for config
+    """
+    for tts_system in tts_settings:
+        if tts_system.get('active'):
+            used_tts = tts_system
+            break
+    module = used_tts['@type']
+
+    # remove server specific keys
+    if '@type' in used_tts:
+        used_tts.pop('@type')
+    if 'active' in used_tts:
+        used_tts.pop('active')
+
+    # prepare tts entry
+    tts = {}
+    tts['module'] = module
+    tts[module] = used_tts
+    return tts
+
+
 class ConfigurationSkill(ScheduledSkill):
     def __init__(self):
         super(ConfigurationSkill, self).__init__("ConfigurationSkill")
@@ -64,6 +90,7 @@ class ConfigurationSkill(ScheduledSkill):
         location = self.api.find_location()
         if location:
             config["location"] = location
+        config["tts"] = parse_tts(config.get("ttsSettings", []))
 
         if self.config_hash != hash(str(config)):
             self.emitter.emit(Message("configuration.updated", config))
