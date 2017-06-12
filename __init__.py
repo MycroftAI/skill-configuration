@@ -74,7 +74,7 @@ class ConfigurationSkill(ScheduledSkill):
 
     def __api_error(self, e):
         if e.response.status_code == 401:
-            self.emitter.emit(Message("mycroft.not.paired"))
+            self.speak_dialog('config.not.paired.dialog')
 
     def get_times(self):
         return [self.get_utc_time() + self.max_delay]
