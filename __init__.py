@@ -57,7 +57,8 @@ class ConfigurationSkill(ScheduledSkill):
             if e.response.status_code == 401:
                 self.log.warn("Impossible to update configuration because "
                               "device isn't paired")
-        self.schedule()
+        finally:
+            self.schedule()
 
     def update(self):
         config = self.api.find_setting()
