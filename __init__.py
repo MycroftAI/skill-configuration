@@ -15,9 +15,11 @@
 # You should have received a copy of the GNU General Public License
 # along with Mycroft Core.  If not, see <http://www.gnu.org/licenses/>.
 
-
+import os
 from adapt.intent import IntentBuilder
+from os.path import isfile, expanduser
 from requests import HTTPError
+from subprocess import check_output, STDOUT
 
 from mycroft.api import DeviceApi
 from mycroft.messagebus.message import Message
@@ -39,7 +41,53 @@ class ConfigurationSkill(ScheduledSkill):
             .require("ConfigurationSkillUpdateVerb") \
             .build()
         self.register_intent(intent, self.handle_update_intent)
+        intent = IntentBuilder('SetKeyword') \
+            .require('ListenerKeyword') \
+            .require('ListenerType') \
+            .build()
+        self.register_intent(intent, self.handle_set_listener)
         self.schedule()
+
+    def handle_set_listener(self, message):
+        try:
+            from mycroft.configuration.config import (
+                LocalConf, USER_CONFIG, Configuration
+            )
+            module = message.data['ListenerType'].replace(' ', '')
+            module = module.replace('default', 'pocketsphinx')
+            config = Configuration.get()
+
+            if module == 'precise':
+                exe_path = expanduser('~/.mycroft/precise/precise-stream')
+                if isfile(exe_path):
+                    self.enclosure.mouth_text('Checking version...')
+                    version = check_output([exe_path, '-v'], stderr=STDOUT)
+                    if version.strip() == '0.1.0':
+                        os.remove(exe_path)
+                    self.enclosure.mouth_reset()
+                else:
+                    self.speak_dialog('download.started')
+                    return
+
+            if config['hotwords']['hey mycroft']['module'] == module:
+                self.speak_dialog('listener.same', data={'listener': module})
+                return
+
+            new_config = {
+                'precise': {
+                    'dist_url': 'http://bootstrap.mycroft.ai/'
+                                'artifacts/static/daily/'
+                },
+                'hotwords': {'hey mycroft': {'module': module}}
+            }
+            user_config = LocalConf(USER_CONFIG)
+            user_config.merge(new_config)
+            user_config.store()
+
+            self.emitter.emit(Message('configuration.updated'))
+            self.speak_dialog('set.listener', data={'listener': module})
+        except (NameError, SyntaxError, ImportError):
+            self.speak_dialog('must.update')
 
     def handle_update_intent(self, message):
         try:
