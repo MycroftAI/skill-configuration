@@ -42,6 +42,7 @@ class ConfigurationSkill(ScheduledSkill):
             .build()
         self.register_intent(intent, self.handle_update_intent)
         intent = IntentBuilder('SetKeyword') \
+            .require('SetKeyword') \
             .require('ListenerKeyword') \
             .require('ListenerType') \
             .build()
