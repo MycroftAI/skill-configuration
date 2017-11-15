@@ -41,12 +41,17 @@ class ConfigurationSkill(ScheduledSkill):
             .require("ConfigurationSkillUpdateVerb") \
             .build()
         self.register_intent(intent, self.handle_update_intent)
-        intent = IntentBuilder('SetKeyword') \
+        intent = IntentBuilder('SetListenerIntent') \
             .require('SetKeyword') \
             .require('ListenerKeyword') \
             .require('ListenerType') \
             .build()
         self.register_intent(intent, self.handle_set_listener)
+        intent = IntentBuilder('GetListenerIntent') \
+            .require('GetKeyword') \
+            .require('ListenerKeyword') \
+            .build()
+        self.register_intent(intent, self.handle_get_listener)
         self.schedule()
 
     def handle_set_listener(self, message):
@@ -88,6 +93,15 @@ class ConfigurationSkill(ScheduledSkill):
                 return
 
             self.speak_dialog('set.listener', data={'listener': module})
+        except (NameError, SyntaxError, ImportError):
+            self.speak_dialog('must.update')
+
+    def handle_get_listener(self, message):
+        try:
+            from mycroft.configuration.config import Configuration
+            module = Configuration.get()['hotwords']['hey mycroft']['module']
+            self.speak_dialog('get.listener', data={'listener': module})
+
         except (NameError, SyntaxError, ImportError):
             self.speak_dialog('must.update')
 
