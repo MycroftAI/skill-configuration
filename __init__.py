@@ -58,6 +58,19 @@ class ConfigurationSkill(ScheduledSkill):
             module = module.replace('default', 'pocketsphinx')
             config = Configuration.get()
 
+            new_config = {
+                'precise': {
+                    'dist_url': 'http://bootstrap.mycroft.ai/'
+                                'artifacts/static/daily/'
+                },
+                'hotwords': {'hey mycroft': {'module': module}}
+            }
+            user_config = LocalConf(USER_CONFIG)
+            user_config.merge(new_config)
+            user_config.store()
+
+            self.emitter.emit(Message('configuration.updated'))
+
             if module == 'precise':
                 exe_path = expanduser('~/.mycroft/precise/precise-stream')
                 if isfile(exe_path):
@@ -74,18 +87,6 @@ class ConfigurationSkill(ScheduledSkill):
                 self.speak_dialog('listener.same', data={'listener': module})
                 return
 
-            new_config = {
-                'precise': {
-                    'dist_url': 'http://bootstrap.mycroft.ai/'
-                                'artifacts/static/daily/'
-                },
-                'hotwords': {'hey mycroft': {'module': module}}
-            }
-            user_config = LocalConf(USER_CONFIG)
-            user_config.merge(new_config)
-            user_config.store()
-
-            self.emitter.emit(Message('configuration.updated'))
             self.speak_dialog('set.listener', data={'listener': module})
         except (NameError, SyntaxError, ImportError):
             self.speak_dialog('must.update')
