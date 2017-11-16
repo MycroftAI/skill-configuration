@@ -14,8 +14,8 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Mycroft Core.  If not, see <http://www.gnu.org/licenses/>.
-
 import os
+import random
 from adapt.intent import IntentBuilder
 from os.path import isfile, expanduser
 from requests import HTTPError
@@ -52,6 +52,11 @@ class ConfigurationSkill(ScheduledSkill):
             .require('ListenerKeyword') \
             .build()
         self.register_intent(intent, self.handle_get_listener)
+        intent = IntentBuilder('UpdatePrecise') \
+            .require('ConfigurationSkillUpdateVerb') \
+            .require('PreciseKeyword') \
+            .build()
+        self.register_intent(intent, self.handle_update_precise)
         self.schedule()
 
     def handle_set_listener(self, message):
@@ -61,7 +66,12 @@ class ConfigurationSkill(ScheduledSkill):
             )
             module = message.data['ListenerType'].replace(' ', '')
             module = module.replace('default', 'pocketsphinx')
+            name = module.replace('pocketsphinx', 'pocket sphinx')
             config = Configuration.get()
+
+            if config['hotwords']['hey mycroft']['module'] == module:
+                self.speak_dialog('listener.same', data={'listener': name})
+                return
 
             new_config = {
                 'precise': {
@@ -88,12 +98,25 @@ class ConfigurationSkill(ScheduledSkill):
                     self.speak_dialog('download.started')
                     return
 
-            name = module.replace('pocketsphinx', 'pocket sphinx')
-            if config['hotwords']['hey mycroft']['module'] == module:
-                self.speak_dialog('listener.same', data={'listener': name})
-                return
-
             self.speak_dialog('set.listener', data={'listener': name})
+        except (NameError, SyntaxError, ImportError):
+            self.speak_dialog('must.update')
+
+    def handle_update_precise(self, message):
+        try:
+            from mycroft.configuration.config import Configuration
+            module = Configuration.get()['hotwords']['hey mycroft']['module']
+            model_file = expanduser('~/.mycroft/precise/hey-mycroft.pb')
+            if module != 'precise':
+                self.speak_dialog('not.precise')
+            if isfile(model_file):
+                os.remove(model_file)
+                new_conf = {'config': {'rand_val': random.random()}}
+                self.emitter.emit(Message('configuration.patch', new_conf))
+                self.emitter.emit(Message('configuration.updated'))
+                self.speak_dialog('models.updated')
+            else:
+                self.speak_dialog('models.not.found')
         except (NameError, SyntaxError, ImportError):
             self.speak_dialog('must.update')
 
@@ -103,7 +126,6 @@ class ConfigurationSkill(ScheduledSkill):
             module = Configuration.get()['hotwords']['hey mycroft']['module']
             name = module.replace('pocketsphinx', 'pocket sphinx')
             self.speak_dialog('get.listener', data={'listener': name})
-
         except (NameError, SyntaxError, ImportError):
             self.speak_dialog('must.update')
 
