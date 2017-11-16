@@ -41,12 +41,17 @@ class ConfigurationSkill(ScheduledSkill):
             .require("ConfigurationSkillUpdateVerb") \
             .build()
         self.register_intent(intent, self.handle_update_intent)
-        intent = IntentBuilder('SetKeyword') \
+        intent = IntentBuilder('SetListenerIntent') \
             .require('SetKeyword') \
             .require('ListenerKeyword') \
             .require('ListenerType') \
             .build()
         self.register_intent(intent, self.handle_set_listener)
+        intent = IntentBuilder('GetListenerIntent') \
+            .require('GetKeyword') \
+            .require('ListenerKeyword') \
+            .build()
+        self.register_intent(intent, self.handle_get_listener)
         self.schedule()
 
     def handle_set_listener(self, message):
@@ -57,6 +62,19 @@ class ConfigurationSkill(ScheduledSkill):
             module = message.data['ListenerType'].replace(' ', '')
             module = module.replace('default', 'pocketsphinx')
             config = Configuration.get()
+
+            new_config = {
+                'precise': {
+                    'dist_url': 'http://bootstrap.mycroft.ai/'
+                                'artifacts/static/daily/'
+                },
+                'hotwords': {'hey mycroft': {'module': module}}
+            }
+            user_config = LocalConf(USER_CONFIG)
+            user_config.merge(new_config)
+            user_config.store()
+
+            self.emitter.emit(Message('configuration.updated'))
 
             if module == 'precise':
                 exe_path = expanduser('~/.mycroft/precise/precise-stream')
@@ -74,19 +92,16 @@ class ConfigurationSkill(ScheduledSkill):
                 self.speak_dialog('listener.same', data={'listener': module})
                 return
 
-            new_config = {
-                'precise': {
-                    'dist_url': 'http://bootstrap.mycroft.ai/'
-                                'artifacts/static/daily/'
-                },
-                'hotwords': {'hey mycroft': {'module': module}}
-            }
-            user_config = LocalConf(USER_CONFIG)
-            user_config.merge(new_config)
-            user_config.store()
-
-            self.emitter.emit(Message('configuration.updated'))
             self.speak_dialog('set.listener', data={'listener': module})
+        except (NameError, SyntaxError, ImportError):
+            self.speak_dialog('must.update')
+
+    def handle_get_listener(self, message):
+        try:
+            from mycroft.configuration.config import Configuration
+            module = Configuration.get()['hotwords']['hey mycroft']['module']
+            self.speak_dialog('get.listener', data={'listener': module})
+
         except (NameError, SyntaxError, ImportError):
             self.speak_dialog('must.update')
 
