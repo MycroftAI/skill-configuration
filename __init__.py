@@ -101,7 +101,8 @@ class ConfigurationSkill(ScheduledSkill):
         try:
             from mycroft.configuration.config import Configuration
             module = Configuration.get()['hotwords']['hey mycroft']['module']
-            self.speak_dialog('get.listener', data={'listener': module})
+            name = module.replace('pocketsphinx', 'pocket sphinx')
+            self.speak_dialog('get.listener', data={'listener': name})
 
         except (NameError, SyntaxError, ImportError):
             self.speak_dialog('must.update')
