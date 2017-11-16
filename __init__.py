@@ -88,11 +88,12 @@ class ConfigurationSkill(ScheduledSkill):
                     self.speak_dialog('download.started')
                     return
 
+            name = module.replace('pocketsphinx', 'pocket sphinx')
             if config['hotwords']['hey mycroft']['module'] == module:
-                self.speak_dialog('listener.same', data={'listener': module})
+                self.speak_dialog('listener.same', data={'listener': name})
                 return
 
-            self.speak_dialog('set.listener', data={'listener': module})
+            self.speak_dialog('set.listener', data={'listener': name})
         except (NameError, SyntaxError, ImportError):
             self.speak_dialog('must.update')
 
