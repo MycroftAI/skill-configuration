@@ -20,12 +20,12 @@ from requests import HTTPError
 from subprocess import check_output, STDOUT
 
 from mycroft.api import DeviceApi
-from mycroft.configuration.config import Configuration
 from mycroft.messagebus.message import Message
 from mycroft.skills.core import intent_handler
 from mycroft.skills.scheduled_skills import ScheduledSkill
 
 
+# TODO: Change from ScheduledSkill
 class ConfigurationSkill(ScheduledSkill):
     def __init__(self):
         super(ConfigurationSkill, self).__init__("ConfigurationSkill")
@@ -34,27 +34,6 @@ class ConfigurationSkill(ScheduledSkill):
         self.config_hash = ''
 
     def initialize(self):
-        intent = IntentBuilder("UpdateConfigurationIntent") \
-            .require("ConfigurationSkillKeyword") \
-            .require("ConfigurationSkillUpdateVerb") \
-            .build()
-        self.register_intent(intent, self.handle_update_intent)
-        intent = IntentBuilder('SetListenerIntent') \
-            .require('SetKeyword') \
-            .require('ListenerKeyword') \
-            .require('ListenerType') \
-            .build()
-        self.register_intent(intent, self.handle_set_listener)
-        intent = IntentBuilder('GetListenerIntent') \
-            .require('GetKeyword') \
-            .require('ListenerKeyword') \
-            .build()
-        self.register_intent(intent, self.handle_get_listener)
-        intent = IntentBuilder('UpdatePrecise') \
-            .require('ConfigurationSkillUpdateVerb') \
-            .require('PreciseKeyword') \
-            .build()
-        self.register_intent(intent, self.handle_update_precise)
         self.schedule()
 
     @intent_handler(IntentBuilder('').require("What").require("Name"))
@@ -64,6 +43,7 @@ class ConfigurationSkill(ScheduledSkill):
 
     @intent_handler(IntentBuilder('').require("What").require("Location"))
     def handle_where_are_you(self, message):
+        from mycroft.configuration.config import Configuration
         config = Configuration.get()
         data = {"city": config["location"]["city"]["name"],
                 "state": config["location"]["city"]["state"]["name"],
@@ -71,10 +51,14 @@ class ConfigurationSkill(ScheduledSkill):
 
         self.speak_dialog("i.am.at", data)
 
+    @intent_handler(IntentBuilder('SetListenerIntent').
+                    require('SetKeyword').
+                    require('ListenerKeyword').
+                    require('ListenerType'))
     def handle_set_listener(self, message):
         try:
             from mycroft.configuration.config import (
-                LocalConf, USER_CONFIG
+                LocalConf, USER_CONFIG, Configuration
             )
             module = message.data['ListenerType'].replace(' ', '')
             module = module.replace('default', 'pocketsphinx')
@@ -114,8 +98,12 @@ class ConfigurationSkill(ScheduledSkill):
         except (NameError, SyntaxError, ImportError):
             self.speak_dialog('must.update')
 
+    @intent_handler(IntentBuilder('UpdatePrecise').
+                    require('ConfigurationSkillUpdateVerb').
+                    require('PreciseKeyword'))
     def handle_update_precise(self, message):
         try:
+            from mycroft.configuration.config import Configuration
             module = Configuration.get()['hotwords']['hey mycroft']['module']
             model_file = expanduser('~/.mycroft/precise/hey-mycroft.pb')
             if module != 'precise':
@@ -131,14 +119,21 @@ class ConfigurationSkill(ScheduledSkill):
         except (NameError, SyntaxError, ImportError):
             self.speak_dialog('must.update')
 
+    @intent_handler(IntentBuilder('GetListenerIntent').
+                    require('GetKeyword').
+                    require('ListenerKeyword'))
     def handle_get_listener(self, message):
         try:
+            from mycroft.configuration.config import Configuration
             module = Configuration.get()['hotwords']['hey mycroft']['module']
             name = module.replace('pocketsphinx', 'pocket sphinx')
             self.speak_dialog('get.listener', data={'listener': name})
         except (NameError, SyntaxError, ImportError):
             self.speak_dialog('must.update')
 
+    @intent_handler(IntentBuilder('UpdateConfigurationIntent').
+                    require("ConfigurationSkillKeyword").
+                    require("ConfigurationSkillUpdateVerb"))
     def handle_update_intent(self, message):
         try:
             if self.update():
