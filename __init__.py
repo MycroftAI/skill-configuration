@@ -1,19 +1,17 @@
-# Copyright 2016 Mycroft AI, Inc.
+# Copyright 2017, Mycroft AI Inc.
 #
-# This file is part of Mycroft Core.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
 #
-# Mycroft Core is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
+#    http://www.apache.org/licenses/LICENSE-2.0
 #
-# Mycroft Core is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Mycroft Core.  If not, see <http://www.gnu.org/licenses/>.
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 import os
 import random
 from adapt.intent import IntentBuilder
@@ -22,10 +20,10 @@ from requests import HTTPError
 from subprocess import check_output, STDOUT
 
 from mycroft.api import DeviceApi
+from mycroft.configuration.config import Configuration
 from mycroft.messagebus.message import Message
+from mycroft.skills.core import intent_handler
 from mycroft.skills.scheduled_skills import ScheduledSkill
-
-__author__ = 'augustnmonteiro'
 
 
 class ConfigurationSkill(ScheduledSkill):
@@ -59,10 +57,24 @@ class ConfigurationSkill(ScheduledSkill):
         self.register_intent(intent, self.handle_update_precise)
         self.schedule()
 
+    @intent_handler(IntentBuilder('').require("What").require("Name"))
+    def handle_query_name(self, message):
+        device = DeviceApi().get()
+        self.speak_dialog("my.name.is", data={"name": device["name"]})
+
+    @intent_handler(IntentBuilder('').require("What").require("Location"))
+    def handle_where_are_you(self, message):
+        config = Configuration.get()
+        data = {"city": config["location"]["city"]["name"],
+                "state": config["location"]["city"]["state"]["name"],
+                "country": config["location"]["city"]["state"]["country"]["name"]}  # nopep8
+
+        self.speak_dialog("i.am.at", data)
+
     def handle_set_listener(self, message):
         try:
             from mycroft.configuration.config import (
-                LocalConf, USER_CONFIG, Configuration
+                LocalConf, USER_CONFIG
             )
             module = message.data['ListenerType'].replace(' ', '')
             module = module.replace('default', 'pocketsphinx')
@@ -104,7 +116,6 @@ class ConfigurationSkill(ScheduledSkill):
 
     def handle_update_precise(self, message):
         try:
-            from mycroft.configuration.config import Configuration
             module = Configuration.get()['hotwords']['hey mycroft']['module']
             model_file = expanduser('~/.mycroft/precise/hey-mycroft.pb')
             if module != 'precise':
@@ -122,7 +133,6 @@ class ConfigurationSkill(ScheduledSkill):
 
     def handle_get_listener(self, message):
         try:
-            from mycroft.configuration.config import Configuration
             module = Configuration.get()['hotwords']['hey mycroft']['module']
             name = module.replace('pocketsphinx', 'pocket sphinx')
             self.speak_dialog('get.listener', data={'listener': name})
@@ -166,9 +176,6 @@ class ConfigurationSkill(ScheduledSkill):
 
     def get_times(self):
         return [self.get_utc_time() + self.max_delay]
-
-    def stop(self):
-        pass
 
 
 def create_skill():
