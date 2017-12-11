@@ -45,7 +45,7 @@ class ConfigurationSkill(ScheduledSkill):
     def handle_what_is_location(self, message):
         # "what is your location" is the same as "where are you", but
         # was difficult to fit into the same intent vocabulary
-        self.where_are_you(message)
+        self.handle_where_are_you(message)
 
     @intent_handler(IntentBuilder('').require("WhereAreYou"))
     def handle_where_are_you(self, message):
