@@ -23,6 +23,7 @@ from mycroft.api import DeviceApi
 from mycroft.messagebus.message import Message
 from mycroft.skills.core import intent_handler
 from mycroft.skills.scheduled_skills import ScheduledSkill
+from mycroft.util.log import LOG
 
 
 # TODO: Change from ScheduledSkill
@@ -159,7 +160,11 @@ class ConfigurationSkill(ScheduledSkill):
         self.schedule()
 
     def update(self):
-        config = self.api.find_setting()
+        # default config to empty dict if something should go wrong
+        config = self.api.find_setting() or {}
+        if not config:  # empty dictionary
+            LOG.debug('Backend returned an empty dictionary,'
+                      ' this may lead to configuration issues')
         location = self.api.find_location()
         if location:
             config["location"] = location
