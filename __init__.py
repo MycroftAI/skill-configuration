@@ -159,7 +159,7 @@ class ConfigurationSkill(ScheduledSkill):
         self.schedule()
 
     def update(self):
-        config = self.api.find_setting()
+        config = self.api.find_setting() or {}
         location = self.api.find_location()
         if location:
             config["location"] = location
