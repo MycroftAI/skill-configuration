@@ -41,7 +41,8 @@ class ConfigurationSkill(ScheduledSkill):
         device = DeviceApi().get()
         self.speak_dialog("my.name.is", data={"name": device["name"]})
 
-    @intent_handler(IntentBuilder('').require("What").require("Location"))
+    @intent_handler(IntentBuilder('').require("What").
+                    require("DeviceLocation"))
     def handle_what_is_location(self, message):
         # "what is your location" is the same as "where are you", but
         # was difficult to fit into the same intent vocabulary
