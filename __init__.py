@@ -11,18 +11,35 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import hashlib
 
 import os
 import random
 from adapt.intent import IntentBuilder
 from os.path import isfile, expanduser
 from requests import HTTPError
-from subprocess import check_output, STDOUT
 
 from mycroft.api import DeviceApi
 from mycroft.messagebus.message import Message
 from mycroft.skills.core import intent_handler
 from mycroft.skills.scheduled_skills import ScheduledSkill
+
+
+def on_error_speak_dialog(dialog_file):
+    def decorator(function):
+        def wrapper(self, message):
+            try:
+                try:
+                    function(self, message)
+                except TypeError:
+                    function(self)
+            except (KeyboardInterrupt, SystemExit):
+                raise
+            except:
+                self.log.exception('In safe wrapped function')
+                self.speak_dialog(dialog_file)
+        return wrapper
+    return decorator
 
 
 # TODO: Change from ScheduledSkill
@@ -32,6 +49,7 @@ class ConfigurationSkill(ScheduledSkill):
         self.max_delay = self.config.get('max_delay')
         self.api = DeviceApi()
         self.config_hash = ''
+        self.model_file = expanduser('~/.mycroft/precise/hey-mycroft.pb')
 
     def initialize(self):
         self.schedule()
@@ -58,85 +76,92 @@ class ConfigurationSkill(ScheduledSkill):
 
         self.speak_dialog("i.am.at", data)
 
+    def get_listener(self):
+        """Raises ImportError or KeyError if not supported"""
+        from mycroft.configuration.config import Configuration
+        wake_word = Configuration.get()['listener']['wake_word']
+        return Configuration.get()['hotwords'].get(wake_word, {}).get('module', 'pocketsphinx')
+
     @intent_handler(IntentBuilder('SetListenerIntent').
                     require('SetKeyword').
                     require('ListenerKeyword').
                     require('ListenerType'))
+    @on_error_speak_dialog('must.update')
     def handle_set_listener(self, message):
-        try:
-            from mycroft.configuration.config import (
-                LocalConf, USER_CONFIG, Configuration
-            )
-            module = message.data['ListenerType'].replace(' ', '')
-            module = module.replace('default', 'pocketsphinx')
-            name = module.replace('pocketsphinx', 'pocket sphinx')
-            config = Configuration.get()
+        from mycroft.configuration.config import (
+            LocalConf, USER_CONFIG, Configuration
+        )
+        module = message.data['ListenerType'].replace(' ', '')
+        module = module.replace('default', 'pocketsphinx')
+        name = module.replace('pocketsphinx', 'pocket sphinx')
 
-            if config['hotwords']['hey mycroft']['module'] == module:
-                self.speak_dialog('listener.same', data={'listener': name})
+        if self.get_listener() == module:
+            self.speak_dialog('listener.same', data={'listener': name})
+            return
+
+        wake_word = Configuration.get()['listener']['wake_word']
+
+        new_config = {
+            'precise': {
+                'dist_url': 'http://bootstrap.mycroft.ai/'
+                            'artifacts/static/daily/'
+            },
+            'hotwords': {wake_word: {'module': module}}
+        }
+        user_config = LocalConf(USER_CONFIG)
+        user_config.merge(new_config)
+        user_config.store()
+
+        self.emitter.emit(Message('configuration.updated'))
+
+        if module == 'precise':
+            exe_path = expanduser('~/.mycroft/precise/precise-stream')
+            if not isfile(exe_path):
+                self.speak_dialog('download.started')
                 return
 
-            new_config = {
-                'precise': {
-                    'dist_url': 'http://bootstrap.mycroft.ai/'
-                                'artifacts/static/daily/'
-                },
-                'hotwords': {'hey mycroft': {'module': module}}
-            }
-            user_config = LocalConf(USER_CONFIG)
-            user_config.merge(new_config)
-            user_config.store()
-
-            self.emitter.emit(Message('configuration.updated'))
-
-            if module == 'precise':
-                exe_path = expanduser('~/.mycroft/precise/precise-stream')
-                if isfile(exe_path):
-                    self.enclosure.mouth_text('Checking version...')
-                    version = check_output([exe_path, '-v'], stderr=STDOUT)
-                    if version.strip() == '0.1.0':
-                        os.remove(exe_path)
-                    self.enclosure.mouth_reset()
-                else:
-                    self.speak_dialog('download.started')
-                    return
-
-            self.speak_dialog('set.listener', data={'listener': name})
-        except (NameError, SyntaxError, ImportError):
-            self.speak_dialog('must.update')
+        self.speak_dialog('set.listener', data={'listener': name})
 
     @intent_handler(IntentBuilder('UpdatePrecise').
                     require('ConfigurationSkillUpdateVerb').
                     require('PreciseKeyword'))
-    def handle_update_precise(self, message):
-        try:
-            from mycroft.configuration.config import Configuration
-            module = Configuration.get()['hotwords']['hey mycroft']['module']
-            model_file = expanduser('~/.mycroft/precise/hey-mycroft.pb')
-            if module != 'precise':
-                self.speak_dialog('not.precise')
-            if isfile(model_file):
-                os.remove(model_file)
-                new_conf = {'config': {'rand_val': random.random()}}
-                self.emitter.emit(Message('configuration.patch', new_conf))
-                self.emitter.emit(Message('configuration.updated'))
-                self.speak_dialog('models.updated')
-            else:
-                self.speak_dialog('models.not.found')
-        except (NameError, SyntaxError, ImportError):
-            self.speak_dialog('must.update')
+    @on_error_speak_dialog('must.update')
+    def handle_update_precise(self):
+        if self.get_listener() != 'precise':
+            self.speak_dialog('not.precise')
+
+        if isfile(self.model_file):
+            os.remove(self.model_file)
+            new_conf = {'config': {'rand_val': random.random()}}
+            self.emitter.emit(Message('configuration.patch', new_conf))
+            self.emitter.emit(Message('configuration.updated'))
+            self.speak_dialog('models.updated')
+        else:
+            self.speak_dialog('models.not.found')
+
+    @intent_handler(IntentBuilder('WhatPreciseModel').
+                    require('What').
+                    require('PreciseKeyword').
+                    require('Using'))
+    @on_error_speak_dialog('must.update')
+    def handle_what_precise_model(self):
+        if self.get_listener() != 'precise':
+            self.speak_dialog('not.precise')
+        if isfile(self.model_file):
+            with open(self.model_file, 'rb') as f:
+                model_hash = hashlib.md5(f.read()).hexdigest()
+            from humanhash import humanize
+            model_name = humanize(model_hash, separator=' ')
+            self.speak_dialog('model.is', {'name': model_name})
 
     @intent_handler(IntentBuilder('GetListenerIntent').
                     require('GetKeyword').
                     require('ListenerKeyword'))
-    def handle_get_listener(self, message):
-        try:
-            from mycroft.configuration.config import Configuration
-            module = Configuration.get()['hotwords']['hey mycroft']['module']
-            name = module.replace('pocketsphinx', 'pocket sphinx')
-            self.speak_dialog('get.listener', data={'listener': name})
-        except (NameError, SyntaxError, ImportError):
-            self.speak_dialog('must.update')
+    @on_error_speak_dialog('must.update')
+    def handle_get_listener(self):
+        module = self.get_listener()
+        name = module.replace('pocketsphinx', 'pocket sphinx')
+        self.speak_dialog('get.listener', data={'listener': name})
 
     @intent_handler(IntentBuilder('UpdateConfigurationIntent').
                     require("ConfigurationSkillKeyword").
