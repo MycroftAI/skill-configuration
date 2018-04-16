@@ -16,7 +16,7 @@ import hashlib
 import os
 import random
 from adapt.intent import IntentBuilder
-from os.path import isfile, expanduser
+from os.path import isfile, expanduser, isdir
 from requests import HTTPError
 
 from mycroft.api import DeviceApi
@@ -33,9 +33,7 @@ def on_error_speak_dialog(dialog_file):
                     function(self, message)
                 except TypeError:
                     function(self)
-            except (KeyboardInterrupt, SystemExit):
-                raise
-            except:
+            except Exception:
                 self.log.exception('In safe wrapped function')
                 self.speak_dialog(dialog_file)
         return wrapper
@@ -115,8 +113,8 @@ class ConfigurationSkill(ScheduledSkill):
         self.emitter.emit(Message('configuration.updated'))
 
         if module == 'precise':
-            exe_path = expanduser('~/.mycroft/precise/precise-stream')
-            if not isfile(exe_path):
+            engine_folder = expanduser('~/.mycroft/precise/precise-stream')
+            if not isdir(engine_folder):
                 self.speak_dialog('download.started')
                 return
 
