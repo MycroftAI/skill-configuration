@@ -166,6 +166,7 @@ class ConfigurationSkill(ScheduledSkill):
                     require("ConfigurationSkillUpdateVerb"))
     def handle_update_intent(self, message):
         try:
+            self.emitter.emit(Message('mycroft.skills.settings.update'))
             if self.update():
                 self.speak_dialog("config.updated")
             else:
