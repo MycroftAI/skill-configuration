@@ -2,6 +2,10 @@
   "utterance": "update configuration",
   "intent_type": "UpdateConfigurationIntent",
   "intent": {
-    "UpdateConfigurationPhrase": "update configuration"
+    "ConfigurationSkillKeyword": "configuration",
+    "ConfigurationSkillUpdateVerb": "update"
+  },
+  "expected_data": {
+      "__type__": "configuration.updated"
   }
 }
