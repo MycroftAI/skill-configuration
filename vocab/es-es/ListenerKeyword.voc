@@ -1,5 +1,6 @@
-oyente
+saludo
 listener
-palabra de activación del oyente
+reconocedor de saludo
+palabra de activación del reconocedor de saludo
 palabra de activación
-motor de la palabra de activación
+motor del reconocedor de saludo
