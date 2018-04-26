@@ -4,8 +4,5 @@
   "intent": {
     "ConfigurationSkillKeyword": "configuration",
     "ConfigurationSkillUpdateVerb": "update"
-  },
-  "expected_data": {
-      "__type__": "configuration.updated"
   }
 }
