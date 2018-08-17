@@ -22,7 +22,7 @@ from requests import HTTPError
 from mycroft.api import DeviceApi
 from mycroft.messagebus.message import Message
 from mycroft.skills.core import intent_handler
-from mycroft.skills.scheduled_skills import ScheduledSkill
+from mycroft import MycroftSkill
 
 
 def on_error_speak_dialog(dialog_file):
@@ -40,8 +40,7 @@ def on_error_speak_dialog(dialog_file):
     return decorator
 
 
-# TODO: Change from ScheduledSkill
-class ConfigurationSkill(ScheduledSkill):
+class ConfigurationSkill(MycroftSkill):
     def __init__(self):
         super(ConfigurationSkill, self).__init__("ConfigurationSkill")
         self.max_delay = self.config.get('max_delay')
@@ -50,7 +49,8 @@ class ConfigurationSkill(ScheduledSkill):
         self.model_file = expanduser('~/.mycroft/precise/hey-mycroft.pb')
 
     def initialize(self):
-        self.schedule()
+        self.schedule_repeating_event(self.update_remote, None, 60,
+                                      'UpdateRemote')
 
     @intent_handler(IntentBuilder('').require("What").require("Name"))
     def handle_query_name(self, message):
@@ -174,18 +174,27 @@ class ConfigurationSkill(ScheduledSkill):
         except HTTPError as e:
             self.__api_error(e)
 
-    def notify(self, timestamp):
+    def update_remote(self, message):
+        """ Handler for scheduled remote configuration update.
+
+        Updates configuration and handles exceptions.
+        """
         try:
-            self.update()
+            if self.update():
+                self.log.info('Remote configuration updated')
         except Exception as e:
             if isinstance(e, HTTPError) and e.response.status_code == 401:
                 self.log.warn("Impossible to update configuration because "
                               "device isn't paired")
             else:
                 self.log.warn("Failed to update settings, will retry later")
-        self.schedule()
 
     def update(self):
+        """ Update remote configuration.
+
+        Reads remote configuration from the Mycroft backend and trigger
+        an update event if a change has occured.
+        """
         config = self.api.find_setting() or {}
         location = self.api.find_location()
         if location:
@@ -204,6 +213,9 @@ class ConfigurationSkill(ScheduledSkill):
 
     def get_times(self):
         return [self.get_utc_time() + self.max_delay]
+
+    def shutdown(self):
+        self.cancel_scheduled_event('UpdateRemote')
 
 
 def create_skill():
