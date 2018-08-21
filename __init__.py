@@ -195,8 +195,8 @@ class ConfigurationSkill(MycroftSkill):
         Reads remote configuration from the Mycroft backend and trigger
         an update event if a change has occured.
         """
-        config = self.api.find_setting() or {}
-        location = self.api.find_location()
+        config = self.api.get_setting() or {}
+        location = self.api.get_location()
         if location:
             config["location"] = location
 
