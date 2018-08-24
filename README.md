@@ -1,7 +1,7 @@
-## Device Configuration
+# <img src='https://rawgithub.com/FortAwesome/Font-Awesome/master/advanced-options/raw-svg/solid/cogs.svg ' card_color='#22a7f0' width='50' height='50' style='vertical-align:bottom'/> Device Configuration
 Synchronize your Device Settings with [home.mycroft.ai](https://home.mycroft.ai).
 
-## Description 
+## About 
 User and device settings from [home.mycroft.ai](https://home.mycroft.ai) are
 synchronized with your Devices.  This Skill performs that synchronization and
 allows you to check your settings.
@@ -27,4 +27,12 @@ __Wake word listener__
 * "Set the Listener to default"
 
 ## Credits 
-@MycroftAI
+Mycroft AI (@MycroftAI)
+
+## Category
+**Configuration**
+
+## Tags
+#configuration
+#update-config
+#config
