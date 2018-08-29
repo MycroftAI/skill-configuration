@@ -110,7 +110,7 @@ class ConfigurationSkill(MycroftSkill):
         user_config.merge(new_config)
         user_config.store()
 
-        self.emitter.emit(Message('configuration.updated'))
+        self.bus.emit(Message('configuration.updated'))
 
         if module == 'precise':
             engine_folder = expanduser('~/.mycroft/precise/precise-stream')
@@ -131,8 +131,8 @@ class ConfigurationSkill(MycroftSkill):
         if isfile(self.model_file):
             os.remove(self.model_file)
             new_conf = {'config': {'rand_val': random.random()}}
-            self.emitter.emit(Message('configuration.patch', new_conf))
-            self.emitter.emit(Message('configuration.updated'))
+            self.bus.emit(Message('configuration.patch', new_conf))
+            self.bus.emit(Message('configuration.updated'))
             self.speak_dialog('models.updated')
         else:
             self.speak_dialog('models.not.found')
@@ -166,7 +166,7 @@ class ConfigurationSkill(MycroftSkill):
                     require("ConfigurationSkillUpdateVerb"))
     def handle_update_intent(self, message):
         try:
-            self.emitter.emit(Message('mycroft.skills.settings.update'))
+            self.bus.emit(Message('mycroft.skills.settings.update'))
             if self.update():
                 self.speak_dialog("config.updated")
             else:
@@ -195,13 +195,13 @@ class ConfigurationSkill(MycroftSkill):
         Reads remote configuration from the Mycroft backend and trigger
         an update event if a change has occured.
         """
-        config = self.api.get_setting() or {}
+        config = self.api.get_settings() or {}
         location = self.api.get_location()
         if location:
             config["location"] = location
 
         if self.config_hash != hash(str(config)):
-            self.emitter.emit(Message("configuration.updated", config))
+            self.bus.emit(Message("configuration.updated", config))
             self.config_hash = hash(str(config))
             return True
         else:
