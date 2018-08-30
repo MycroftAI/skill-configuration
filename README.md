@@ -1,9 +1,9 @@
-# Configuration
-Work with your configuration settings
+# <img src='https://rawgithub.com/FortAwesome/Font-Awesome/master/advanced-options/raw-svg/solid/cogs.svg' card_color='#22a7f0' width='50' height='50' style='vertical-align:bottom'/> Device Configuration
+Synchronize your Device Settings with [home.mycroft.ai](https://home.mycroft.ai).
 
-## Description
-User and device settings from [Mycroft Home](https://home.mycroft.ai) are
-synchronized with your devices.  This skill performs that synchronization and
+## About 
+User and device settings from [home.mycroft.ai](https://home.mycroft.ai) are
+synchronized with your Devices.  This Skill performs that synchronization and
 allows you to check your settings.
 
 You can also change the technology used to perform Wake Word spotting.  This is
@@ -11,7 +11,7 @@ the system that wakes the device up when you say "Hey Mycroft".
 
 __Wake word listener__
 > Values are 'PocketSphinx'/'Default' or 'Precise'.
-> Precise is the newest technology from Mycroft -- a much more sensitive,
+> [Precise](https://mycroft.ai/documentation/precise) is the newest technology from Mycroft -- a much more sensitive,
 > continuously updated listener.  It learns from those who have chosen to
 > Opt In (thank you!)
 >
@@ -19,12 +19,20 @@ __Wake word listener__
 
 ## Examples 
 * "Configuration update"
-* "What is your location?"
-* "What is your name?"
-* "Change the listener to Precise"
-* "What is the current listener?"
-
+* "Update config"
+* "What's your location?"
+* "What's your name?"
+* "What's the current Listener?"
+* "Set the Listener to Precise"
+* "Set the Listener to default"
 
 ## Credits 
-Mycroft AI
+Mycroft AI (@MycroftAI)
 
+## Category
+**Configuration**
+
+## Tags
+#configuration
+#update-config
+#config
