@@ -1,4 +1,4 @@
-# <img src='https://rawgithub.com/FortAwesome/Font-Awesome/master/advanced-options/raw-svg/solid/cogs.svg ' card_color='#22a7f0' width='50' height='50' style='vertical-align:bottom'/> Device Configuration
+# <img src='https://rawgithub.com/FortAwesome/Font-Awesome/master/advanced-options/raw-svg/solid/cogs.svg' card_color='#22a7f0' width='50' height='50' style='vertical-align:bottom'/> Device Configuration
 Synchronize your Device Settings with [home.mycroft.ai](https://home.mycroft.ai).
 
 ## About 
