@@ -1,7 +1,7 @@
 # <img src='https://rawgithub.com/FortAwesome/Font-Awesome/master/advanced-options/raw-svg/solid/cogs.svg' card_color='#22a7f0' width='50' height='50' style='vertical-align:bottom'/> Device Configuration
-Synchronize your Device Settings with [home.mycroft.ai](https://home.mycroft.ai).
+Synchronize your Device Settings with [Home](https://home.mycroft.ai).
 
-## About 
+## About
 User and device settings from [home.mycroft.ai](https://home.mycroft.ai) are
 synchronized with your Devices.  This Skill performs that synchronization and
 allows you to check your settings.
@@ -17,7 +17,7 @@ __Wake word listener__
 >
 > For now, Precise only handles the "Hey Mycroft" keyword.
 
-## Examples 
+## Examples
 * "Configuration update"
 * "Update config"
 * "What's your location?"
@@ -26,7 +26,7 @@ __Wake word listener__
 * "Set the Listener to Precise"
 * "Set the Listener to default"
 
-## Credits 
+## Credits
 Mycroft AI (@MycroftAI)
 
 ## Category
@@ -36,3 +36,5 @@ Mycroft AI (@MycroftAI)
 #configuration
 #update-config
 #config
+#system
+
