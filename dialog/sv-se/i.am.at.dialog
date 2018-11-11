@@ -1,2 +1,2 @@
-Jag är i {{city}} i {{country}}
-Mina inställningar säger att jag är i {{city}}, {{country}}
+Jag är i {{city}} {{state}} {{country}}
+Mina inställningar indikerar att jag är i {{city}} {{state}} {{country}}
