@@ -1,6 +1,5 @@
-saludo
-listener
-reconocedor de saludo
-palabra de activación del reconocedor de saludo
+oyente
+oyente de palabra de activación
+motor de palabra activación
 palabra de activación
-motor del reconocedor de saludo
+motor de palabra de activación
