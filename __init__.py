@@ -42,11 +42,11 @@ def on_error_speak_dialog(dialog_file):
 
 class ConfigurationSkill(MycroftSkill):
     def __init__(self):
-        super(ConfigurationSkill, self).__init__("ConfigurationSkill")
-        self.max_delay = self.config.get('max_delay')
+        super().__init__("ConfigurationSkill")
         self.api = DeviceApi()
         self.config_hash = ''
         self.model_file = expanduser('~/.mycroft/precise/hey-mycroft.pb')
+        self.settings["max_delay"] = 60
 
     def initialize(self):
         self.schedule_repeating_event(self.update_remote, None, 60,
@@ -212,7 +212,7 @@ class ConfigurationSkill(MycroftSkill):
             self.speak_dialog('config.not.paired.dialog')
 
     def get_times(self):
-        return [self.get_utc_time() + self.max_delay]
+        return [self.get_utc_time() + self.settings["max_delay"]]
 
     def shutdown(self):
         self.cancel_scheduled_event('UpdateRemote')
