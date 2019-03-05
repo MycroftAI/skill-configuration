@@ -21,7 +21,7 @@ from requests import HTTPError
 
 from mycroft.api import DeviceApi
 from mycroft.messagebus.message import Message
-from mycroft.skills.core import intent_handler
+from mycroft.skills.core import intent_handler, intent_file_handler
 from mycroft import MycroftSkill
 
 
@@ -57,14 +57,7 @@ class ConfigurationSkill(MycroftSkill):
         device = DeviceApi().get()
         self.speak_dialog("my.name.is", data={"name": device["name"]})
 
-    @intent_handler(IntentBuilder('').require("What").
-                    require("DeviceLocation"))
-    def handle_what_is_location(self, message):
-        # "what is your location" is the same as "where are you", but
-        # was difficult to fit into the same intent vocabulary
-        self.handle_where_are_you(message)
-
-    @intent_handler(IntentBuilder('').require("WhereAreYou"))
+    @intent_file_handler("WhereAreYou.intent")
     def handle_where_are_you(self, message):
         from mycroft.configuration.config import Configuration
         config = Configuration.get()
