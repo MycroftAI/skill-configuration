@@ -96,7 +96,10 @@ class ConfigurationSkill(MycroftSkill):
 
         for item in glob(expanduser('~/.mycroft/precise/precise-engine*')):
             self.log.info('Removing: {}...'.format(item))
-            rmtree(item)
+            if isdir(item):
+                rmtree(item)
+            else:
+                os.remove(item)
         local_conf = LocalConf(USER_CONFIG)
         pconfig = local_conf.get('precise', {})
         if pconfig.get('dist_url') == self.PRECISE_DEV_DIST_URL:
