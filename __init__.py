@@ -109,7 +109,7 @@ class ConfigurationSkill(MycroftSkill):
         local_conf.store()
 
         self.bus.emit(Message('configuration.updated'))
-        self.speak_dialog('precise.devmode.enabled')
+        self.speak_dialog('precise.devmode.disabled')
 
     @intent_file_handler("WhereAreYou.intent")
     def handle_where_are_you(self, message):
