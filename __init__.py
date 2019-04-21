@@ -89,7 +89,7 @@ class ConfigurationSkill(MycroftSkill):
 
     @intent_file_handler("DisablePreciseDev.intent")
     @on_error_speak_dialog('must.update')
-    def handle_use_precise_dev(self, message):
+    def handle_disable_precise_dev(self, message):
         from mycroft.configuration.config import (
             LocalConf, USER_CONFIG
         )
