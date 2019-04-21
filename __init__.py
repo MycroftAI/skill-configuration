@@ -16,8 +16,10 @@ import hashlib
 import os
 import random
 from adapt.intent import IntentBuilder
+from glob import glob
 from os.path import isfile, expanduser, isdir
 from requests import HTTPError
+from shutil import rmtree
 
 from mycroft.api import DeviceApi
 from mycroft.messagebus.message import Message
@@ -41,6 +43,11 @@ def on_error_speak_dialog(dialog_file):
 
 
 class ConfigurationSkill(MycroftSkill):
+    PRECISE_DEV_DIST_URL = "https://github.com/MycroftAI/precise-data/" \
+                           "raw/dist/{arch}/latest"
+    PRECISE_DEV_MODEL_URL = "https://raw.githubusercontent.com/MycroftAI/" \
+                            "precise-data/models-dev/{wake_word}.tar.gz"
+
     def __init__(self):
         super().__init__("ConfigurationSkill")
         self.api = DeviceApi()
@@ -57,13 +64,62 @@ class ConfigurationSkill(MycroftSkill):
         device = DeviceApi().get()
         self.speak_dialog("my.name.is", data={"name": device["name"]})
 
+    @intent_file_handler("EnablePreciseDev.intent")
+    @on_error_speak_dialog('must.update')
+    def handle_use_precise_dev(self, message):
+        from mycroft.configuration.config import (
+            LocalConf, USER_CONFIG, Configuration
+        )
+
+        wake_word = Configuration.get()['listener']['wake_word']
+
+        new_config = {
+            'precise': {
+                "dist_url": self.PRECISE_DEV_DIST_URL,
+                "model_url": self.PRECISE_DEV_MODEL_URL
+            },
+            'hotwords': {wake_word: {'module': 'precise', 'sensitivity': 0.5}}
+        }
+        user_config = LocalConf(USER_CONFIG)
+        user_config.merge(new_config)
+        user_config.store()
+
+        self.bus.emit(Message('configuration.updated'))
+        self.speak_dialog('precise.devmode.enabled')
+
+    @intent_file_handler("DisablePreciseDev.intent")
+    @on_error_speak_dialog('must.update')
+    def handle_disable_precise_dev(self, message):
+        from mycroft.configuration.config import (
+            LocalConf, USER_CONFIG
+        )
+
+        for item in glob(expanduser('~/.mycroft/precise/precise-engine*')):
+            self.log.info('Removing: {}...'.format(item))
+            if isdir(item):
+                rmtree(item)
+            else:
+                os.remove(item)
+        local_conf = LocalConf(USER_CONFIG)
+        pconfig = local_conf.get('precise', {})
+        if pconfig.get('dist_url') == self.PRECISE_DEV_DIST_URL:
+            del pconfig['dist_url']
+        if pconfig.get('model_url') == self.PRECISE_DEV_MODEL_URL:
+            del pconfig['model_url']
+        local_conf.store()
+
+        self.bus.emit(Message('configuration.updated'))
+        self.speak_dialog('precise.devmode.disabled')
+
     @intent_file_handler("WhereAreYou.intent")
     def handle_where_are_you(self, message):
         from mycroft.configuration.config import Configuration
         config = Configuration.get()
-        data = {"city": config["location"]["city"]["name"],
-                "state": config["location"]["city"]["state"]["name"],
-                "country": config["location"]["city"]["state"]["country"]["name"]}  # nopep8
+        data = {
+            "city": config["location"]["city"]["name"],
+            "state": config["location"]["city"]["state"]["name"],
+            "country": config["location"]["city"]["state"]["country"]["name"]
+        }
 
         self.speak_dialog("i.am.at", data)
 
@@ -71,7 +127,8 @@ class ConfigurationSkill(MycroftSkill):
         """Raises ImportError or KeyError if not supported"""
         from mycroft.configuration.config import Configuration
         wake_word = Configuration.get()['listener']['wake_word']
-        return Configuration.get()['hotwords'].get(wake_word, {}).get('module', 'pocketsphinx')
+        ww_config = Configuration.get()['hotwords'].get(wake_word, {})
+        return ww_config.get('module', 'pocketsphinx')
 
     @intent_handler(IntentBuilder('SetListenerIntent').
                     require('SetKeyword').
@@ -93,10 +150,6 @@ class ConfigurationSkill(MycroftSkill):
         wake_word = Configuration.get()['listener']['wake_word']
 
         new_config = {
-            'precise': {
-                'dist_url': 'http://bootstrap.mycroft.ai/'
-                            'artifacts/static/daily/'
-            },
             'hotwords': {wake_word: {'module': module}}
         }
         user_config = LocalConf(USER_CONFIG)
@@ -106,7 +159,7 @@ class ConfigurationSkill(MycroftSkill):
         self.bus.emit(Message('configuration.updated'))
 
         if module == 'precise':
-            engine_folder = expanduser('~/.mycroft/precise/precise-stream')
+            engine_folder = expanduser('~/.mycroft/precise/precise-engine')
             if not isdir(engine_folder):
                 self.speak_dialog('download.started')
                 return
