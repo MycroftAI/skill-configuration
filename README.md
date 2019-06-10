@@ -9,22 +9,14 @@ allows you to check your settings.
 You can also change the technology used to perform Wake Word spotting.  This is
 the system that wakes the device up when you say "Hey Mycroft".
 
-__Wake word listener__
-> Values are 'PocketSphinx'/'Default' or 'Precise'.
-> [Precise](https://mycroft.ai/documentation/precise) is the newest technology from Mycroft -- a much more sensitive,
-> continuously updated listener.  It learns from those who have chosen to
-> Opt In (thank you!)
->
-> For now, Precise only handles the "Hey Mycroft" keyword.
-
 ## Examples
 * "Configuration update"
 * "Update config"
 * "What's your location?"
 * "What's your name?"
-* "What's the current Listener?"
-* "Set the Listener to Precise"
-* "Set the Listener to default"
+* "What's the current Listener?" (for advanced debugging)
+* "Set the Listener to Precise" (for advanced debugging)
+* "Set the Listener to default" (for advanced debugging)
 
 ## Credits
 Mycroft AI (@MycroftAI)

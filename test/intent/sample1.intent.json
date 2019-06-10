@@ -2,7 +2,7 @@
   "utterance": "update configuration",
   "intent_type": "UpdateConfigurationIntent",
   "intent": {
-    "ConfigurationSkillKeyword": "configuration",
-    "ConfigurationSkillUpdateVerb": "update"
+    "Config": "configuration",
+    "Update": "update"
   }
 }
