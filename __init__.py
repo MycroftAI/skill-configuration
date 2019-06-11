@@ -209,7 +209,7 @@ class ConfigurationSkill(MycroftSkill):
 
     @intent_handler(IntentBuilder('UpdateConfigurationIntent').
                     require('Update').
-                    require('Settings'))
+                    require('Config'))
     def handle_update_intent(self, message):
         try:
             self.bus.emit(Message('mycroft.skills.settings.update'))
