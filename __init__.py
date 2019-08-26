@@ -220,6 +220,24 @@ class ConfigurationSkill(MycroftSkill):
         except HTTPError as e:
             self.__api_error(e)
 
+    @intent_file_handler("change_language.intent")
+    def handle_change_language(self, message):
+        from mycroft.configuration.config import USER_CONFIG
+        language_values = self.translate_namedvalues('language.value')
+        language = message.data.get("language")
+        self.speak_dialog('change.language', data={'language': language})
+        if language in language_values.keys():
+           language = language_values[language]
+        self.speak_dialog('change.language', data={'language': language})
+        new_config = {
+            'lang': language
+        }
+        user_config = LocalConf(USER_CONFIG)
+        user_config.merge(new_config)
+        user_config.store()
+
+
+
     def update_remote(self, message):
         """ Handler for scheduled remote configuration update.
 
