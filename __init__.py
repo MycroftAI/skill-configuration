@@ -227,13 +227,13 @@ class ConfigurationSkill(MycroftSkill):
         language = message.data.get("language")
         if language:
            language = language_values[language]
-        self.speak_dialog('change.language', data={'language': language})
         new_config = {
             'lang': language
         }
         user_config = LocalConf(USER_CONFIG)
         user_config.merge(new_config)
         user_config.store()
+        self.speak_dialog('change.language', data={'language': language})
         self.bus.emit(Message("system.reboot"))
 
 
