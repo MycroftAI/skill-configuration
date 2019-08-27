@@ -222,18 +222,22 @@ class ConfigurationSkill(MycroftSkill):
 
     @intent_file_handler("change.language.intent")
     def handle_change_language(self, message):
-        from mycroft.configuration.config import (USER_CONFIG, LocalConf)
+        from mycroft.configuration.config import (USER_CONFIG, LocalConf, Configuration)
+        from mycroft.util.lang import set_active_lang
         language_values = self.translate_namedvalues('language.value')
         language = message.data.get("language")
         if language:
            language = language_values[language]
+        tts = Configuration.get()['tts']['module']
+
         new_config = {
-            'lang': language
+            'lang': language,
+            'tts': {tts: {'lang': language[:2]}}
         }
         user_config = LocalConf(USER_CONFIG)
         user_config.merge(new_config)
         user_config.store()
-        self.bus.emit(Message('configuration.updated'))
+        set_active_lang(language)
         self.speak_dialog('change.language', data={'language': language})
 
     def update_remote(self, message):
