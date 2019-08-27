@@ -233,9 +233,8 @@ class ConfigurationSkill(MycroftSkill):
         user_config = LocalConf(USER_CONFIG)
         user_config.merge(new_config)
         user_config.store()
+        self.bus.emit(Message('configuration.updated'))
         self.speak_dialog('change.language', data={'language': language})
-        self.bus.emit(Message("system.reboot"))
-
 
     def update_remote(self, message):
         """ Handler for scheduled remote configuration update.
