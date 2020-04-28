@@ -140,7 +140,7 @@ class ConfigurationSkill(MycroftSkill):
             LocalConf, USER_CONFIG, Configuration
         )
         module = message.data['ListenerType'].replace(' ', '')
-        module = module.replace('default', 'pocketsphinx')
+        module = module.replace('default', 'precise')
         name = module.replace('pocketsphinx', 'pocket sphinx')
 
         if self.get_listener() == module:
