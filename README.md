@@ -14,6 +14,7 @@ the system that wakes the device up when you say "Hey Mycroft".
 * "Update config"
 * "What's your location?"
 * "What's your name?"
+* "Change language in german"
 * "What's the current Listener?" (for advanced debugging)
 * "Set the Listener to Precise" (for advanced debugging)
 * "Set the Listener to default" (for advanced debugging)
@@ -29,4 +30,5 @@ Mycroft AI (@MycroftAI)
 #update-config
 #config
 #system
+#language
 
