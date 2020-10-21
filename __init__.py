@@ -23,9 +23,7 @@ from shutil import rmtree
 
 from mycroft.api import DeviceApi
 from mycroft.messagebus.message import Message
-from mycroft.skills.core import intent_handler, intent_file_handler
-from mycroft import MycroftSkill
-
+from mycroft import MycroftSkill, intent_handler
 
 def on_error_speak_dialog(dialog_file):
     def decorator(function):
@@ -64,7 +62,7 @@ class ConfigurationSkill(MycroftSkill):
         device = DeviceApi().get()
         self.speak_dialog("my.name.is", data={"name": device["name"]})
 
-    @intent_file_handler("EnablePreciseDev.intent")
+    @intent_handler("EnablePreciseDev.intent")
     @on_error_speak_dialog('must.update')
     def handle_use_precise_dev(self, message):
         from mycroft.configuration.config import (
@@ -87,7 +85,7 @@ class ConfigurationSkill(MycroftSkill):
         self.bus.emit(Message('configuration.updated'))
         self.speak_dialog('precise.devmode.enabled')
 
-    @intent_file_handler("DisablePreciseDev.intent")
+    @intent_handler("DisablePreciseDev.intent")
     @on_error_speak_dialog('must.update')
     def handle_disable_precise_dev(self, message):
         from mycroft.configuration.config import (
@@ -111,7 +109,7 @@ class ConfigurationSkill(MycroftSkill):
         self.bus.emit(Message('configuration.updated'))
         self.speak_dialog('precise.devmode.disabled')
 
-    @intent_file_handler("WhereAreYou.intent")
+    @intent_handler("WhereAreYou.intent")
     def handle_where_are_you(self, message):
         from mycroft.configuration.config import Configuration
         config = Configuration.get()
