@@ -1,2 +1,4 @@
 requests>=2.13.0
 humanhash3
+pyxdg
+watchdog

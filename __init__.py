@@ -17,13 +17,27 @@ import os
 import random
 from adapt.intent import IntentBuilder
 from glob import glob
-from os.path import isfile, expanduser, isdir
+from os.path import isfile, expanduser, isdir, join
 from requests import HTTPError
 from shutil import rmtree
 
+import xdg.BaseDirectory
+
 from mycroft.api import DeviceApi
+from mycroft.configuration import LocalConf
+from mycroft.configuration.locations import (
+    DEFAULT_CONFIG,
+    OLD_USER_CONFIG,
+    SYSTEM_CONFIG,
+    USER_CONFIG
+)
+
+
 from mycroft.messagebus.message import Message
 from mycroft import MycroftSkill, intent_handler
+
+from .file_watch import FileWatcher
+
 
 def on_error_speak_dialog(dialog_file):
     def decorator(function):
@@ -40,6 +54,26 @@ def on_error_speak_dialog(dialog_file):
     return decorator
 
 
+def get_possible_config_files():
+    found_configs = set()
+    # XDG Locations
+    for conf_dir in xdg.BaseDirectory.load_config_paths('mycroft'):
+        config_file = join(conf_dir, 'mycroft.conf')
+        if isfile(config_file):
+            found_configs.add(config_file)
+
+    hardcoded_configs = (
+        DEFAULT_CONFIG,
+        OLD_USER_CONFIG,
+        SYSTEM_CONFIG,
+        USER_CONFIG
+    )
+    for config in hardcoded_configs:
+        if isfile(config):
+            found_configs.add(config)
+    return found_configs
+
+
 class ConfigurationSkill(MycroftSkill):
     PRECISE_DEV_DIST_URL = "https://github.com/MycroftAI/precise-data/" \
                            "raw/dist/{arch}/latest"
@@ -52,10 +86,24 @@ class ConfigurationSkill(MycroftSkill):
         self.config_hash = ''
         self.model_file = expanduser('~/.mycroft/precise/hey-mycroft.pb')
         self.settings["max_delay"] = 60
+        self.config_watcher = FileWatcher(
+            get_possible_config_files(),
+            self.config_changed_callback
+        )
 
     def initialize(self):
         self.schedule_repeating_event(self.update_remote, None, 60,
                                       'UpdateRemote')
+
+    def config_changed_callback(self, path):
+        """Handler for updated configurations on disk.
+
+        Args:
+            path (str): file that triggered the update
+        """
+        self.log.info(f"{path} changed on disk, update config!")
+        config = LocalConf(path)
+        self.bus.emit(Message("configuration.updated", config))
 
     @intent_handler(IntentBuilder('').require('Query').require('Name'))
     def handle_query_name(self, message):
@@ -260,6 +308,7 @@ class ConfigurationSkill(MycroftSkill):
 
     def shutdown(self):
         self.cancel_scheduled_event('UpdateRemote')
+        self.config_watcher.shutdown()
 
 
 def create_skill():
